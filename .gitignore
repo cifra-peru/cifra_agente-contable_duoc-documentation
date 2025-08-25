@@ -1,0 +1,15 @@
+# Archivos temporales de Office
+~$*
+*.tmp
+
+# Archivos de respaldo
+*.bak
+*~
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Carpetas de IDEs
+.vscode/
+.idea/
