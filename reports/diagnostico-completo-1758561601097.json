@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-09-22T17:20:01.088Z",
+  "system": "SUNAT AI",
+  "connectivity": {
+    "internet": true,
+    "sunatUrls": {
+      "Login": {
+        "status": "error",
+        "url": "https://api-seguridad.sunat.gob.pe/v1/clientessol/4f3b88b3-d9d6-402a-b85d-6a0bc857746a/oauth2/loginMenuSol",
+        "error": "page.goto: Target page, context or browser has been closed"
+      },
+      "Menú Principal": {
+        "status": "error",
+        "url": "https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm",
+        "error": "page.goto: Target page, context or browser has been closed"
+      },
+      "Home SUNAT": {
+        "status": "error",
+        "url": "https://www.sunat.gob.pe",
+        "error": "page.goto: Target page, context or browser has been closed"
+      },
+      "Portal SUNAT": {
+        "status": "error",
+        "url": "https://e-menu.sunat.gob.pe",
+        "error": "page.goto: Target page, context or browser has been closed"
+      },
+      "Menú Base": {
+        "status": "error",
+        "url": "https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm",
+        "error": "page.goto: Target page, context or browser has been closed"
+      },
+      "SUNAT Principal": {
+        "status": "error",
+        "url": "https://www.sunat.gob.pe",
+        "error": "page.goto: Target page, context or browser has been closed"
+      }
+    }
+  },
+  "workingUrls": [],
+  "totalUrls": 6,
+  "successRate": "0/6",
+  "configuracion": {
+    "timeout": 1800000,
+    "playwright": {
+      "timeout": 1800000,
+      "defaultTimeout": 60000,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "blockResources": [
+        "media",
+        "analytics",
+        "tracking",
+        "ads",
+        "doubleclick"
+      ],
+      "humanTiming": {
+        "min": 800,
+        "max": 2000,
+        "afterClick": {
+          "min": 1000,
+          "max": 2000
+        },
+        "afterInput": {
+          "min": 1200,
+          "max": 2200
+        },
+        "afterSubmit": {
+          "min": 1500,
+          "max": 2500
+        }
+      }
+    },
+    "credenciales": {
+      "ruc": "20487255387",
+      "usuario": "INKASIRE"
+    }
+  }
+}

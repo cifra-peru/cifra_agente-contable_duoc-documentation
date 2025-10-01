@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUNAT AI - Demostración</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0063AE 0%, #004586 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card h3 {
+            color: #0063AE;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-card .icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        
+        .demo-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-section h3 {
+            color: #0063AE;
+            margin-top: 0;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #0063AE;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #004586;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-online {
+            background: #28a745;
+        }
+        
+        .status-offline {
+            background: #dc3545;
+        }
+        
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #0063AE;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .footer p {
+            margin: 0;
+            opacity: 0.8;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 SUNAT AI</h1>
+            <p>Sistema de Inteligencia Artificial para SUNAT</p>
+        </div>
+        
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>¡Bienvenido!</strong> Esta es una demostración del sistema SUNAT AI. 
+                Incluye analizador inteligente, motor de búsqueda avanzado, asistente virtual y suite de pruebas automatizadas.
+            </div>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <h3><span class="icon">🔍</span> Analizador Inteligente</h3>
+                    <p>Analiza el comportamiento del usuario, genera recomendaciones personalizadas y proporciona insights sobre el uso del sistema.</p>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="testAnalyzer()">Probar Analizador</button>
+                        <button class="btn btn-secondary" onclick="showAnalyzerStats()">Ver Estadísticas</button>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">🔎</span> Motor de Búsqueda</h3>
+                    <p>Búsqueda semántica avanzada con sinónimos, predicciones y filtros inteligentes para encontrar servicios rápidamente.</p>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="testSearch()">Probar Búsqueda</button>
+                        <button class="btn btn-secondary" onclick="testVoiceSearch()">Búsqueda por Voz</button>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">🤖</span> Asistente Virtual</h3>
+                    <p>Asistente inteligente que proporciona ayuda contextual, guías paso a paso y soporte automatizado.</p>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="openAssistant()">Abrir Asistente</button>
+                        <button class="btn btn-secondary" onclick="testAssistant()">Probar Chat</button>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">🧪</span> Suite de Pruebas</h3>
+                    <p>Testing automatizado con IA para funcionalidad, rendimiento, accesibilidad y seguridad.</p>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="runTests()">Ejecutar Pruebas</button>
+                        <button class="btn btn-secondary" onclick="showTestDashboard()">Ver Dashboard</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-section">
+                <h3>🎛️ Panel de Control del Sistema</h3>
+                <p>Accede al panel de control completo para monitorear el estado del sistema, ejecutar diagnósticos y configurar opciones.</p>
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="openControlPanel()">Abrir Panel de Control</button>
+                    <button class="btn btn-info" onclick="runDiagnostic()">Ejecutar Diagnóstico</button>
+                    <button class="btn btn-warning" onclick="exportData()">Exportar Datos</button>
+                </div>
+            </div>
+            
+            <div class="demo-section">
+                <h3>📊 Estado del Sistema</h3>
+                <div id="system-status">
+                    <p><span class="spinner"></span>Cargando estado del sistema...</p>
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="refreshStatus()">Actualizar Estado</button>
+                </div>
+            </div>
+            
+            <div class="demo-section">
+                <h3>💻 Ejemplos de Código</h3>
+                <p>Aquí tienes algunos ejemplos de cómo usar las herramientas SUNAT AI:</p>
+                
+                <h4>Analizador:</h4>
+                <div class="code-block">
+// Obtener recomendaciones personalizadas
+const recomendaciones = sunatAIHelpers.recomendaciones();
+console.log(recomendaciones);
+
+// Generar reporte de análisis
+const reporte = sunatAIHelpers.reporte();
+console.log(reporte);
+                </div>
+                
+                <h4>Motor de Búsqueda:</h4>
+                <div class="code-block">
+// Búsqueda inteligente
+const resultados = sunatSearchHelpers.buscar("consulta declaraciones");
+console.log(resultados);
+
+// Búsqueda predictiva
+const predicciones = sunatSearchHelpers.predictivo("fact");
+console.log(predicciones);
+                </div>
+                
+                <h4>Asistente:</h4>
+                <div class="code-block">
+// Mostrar notificación
+sunatAssistantHelpers.mostrarNotificacion("Hola desde SUNAT AI!", "info");
+
+// Iniciar guía
+sunatAssistantHelpers.iniciarGuia("Cómo consultar declaraciones");
+                </div>
+                
+                <h4>Suite de Pruebas:</h4>
+                <div class="code-block">
+// Ejecutar todas las pruebas
+const resultados = await sunatTestingHelpers.ejecutarPruebas();
+console.log(resultados);
+
+// Crear dashboard de pruebas
+sunatTestingHelpers.crearDashboard();
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2024 SUNAT AI - Sistema de Inteligencia Artificial para SUNAT</p>
+        </div>
+    </div>
+
+    <!-- Scripts de SUNAT AI -->
+    <script src="utils/sunat-ai-analyzer.js"></script>
+    <script src="utils/sunat-ai-search.js"></script>
+    <script src="utils/sunat-ai-assistant.js"></script>
+    <script src="utils/sunat-ai-testing.js"></script>
+    <script src="utils/sunat-ai-integration.js"></script>
+
+    <script>
+        // Funciones de demostración
+        function testAnalyzer() {
+            if (window.sunatAIHelpers) {
+                const recomendaciones = sunatAIHelpers.recomendaciones();
+                alert('Recomendaciones generadas: ' + recomendaciones.length + ' elementos encontrados');
+                console.log('Recomendaciones:', recomendaciones);
+            } else {
+                alert('Analizador no está disponible. Espera a que se cargue completamente.');
+            }
+        }
+
+        function showAnalyzerStats() {
+            if (window.sunatAIHelpers) {
+                const reporte = sunatAIHelpers.reporte();
+                alert('Reporte generado. Revisa la consola para más detalles.');
+                console.log('Reporte del analizador:', reporte);
+            } else {
+                alert('Analizador no está disponible.');
+            }
+        }
+
+        function testSearch() {
+            if (window.sunatSearchHelpers) {
+                const resultados = sunatSearchHelpers.buscar("consulta declaraciones");
+                alert('Búsqueda completada: ' + resultados.results.length + ' resultados encontrados');
+                console.log('Resultados de búsqueda:', resultados);
+            } else {
+                alert('Motor de búsqueda no está disponible.');
+            }
+        }
+
+        function testVoiceSearch() {
+            if ('webkitSpeechRecognition' in window) {
+                alert('Búsqueda por voz disponible. Usa el botón del asistente para probarlo.');
+            } else {
+                alert('Búsqueda por voz no está disponible en este navegador.');
+            }
+        }
+
+        function openAssistant() {
+            if (window.sunatAIAssistant) {
+                sunatAIAssistant.showAssistantPanel();
+            } else {
+                alert('Asistente no está disponible.');
+            }
+        }
+
+        function testAssistant() {
+            if (window.sunatAssistantHelpers) {
+                sunatAssistantHelpers.mostrarNotificacion("¡Hola! Soy el asistente SUNAT AI.", "info");
+            } else {
+                alert('Asistente no está disponible.');
+            }
+        }
+
+        function runTests() {
+            if (window.sunatTestingHelpers) {
+                sunatTestingHelpers.ejecutarPruebas().then(resultados => {
+                    alert('Pruebas completadas: ' + resultados.passed + ' pasaron, ' + resultados.failed + ' fallaron');
+                    console.log('Resultados de pruebas:', resultados);
+                });
+            } else {
+                alert('Suite de pruebas no está disponible.');
+            }
+        }
+
+        function showTestDashboard() {
+            if (window.sunatTestingHelpers) {
+                sunatTestingHelpers.crearDashboard();
+            } else {
+                alert('Suite de pruebas no está disponible.');
+            }
+        }
+
+        function openControlPanel() {
+            if (window.sunatAI) {
+                sunatAI.panel();
+            } else {
+                alert('Panel de control no está disponible.');
+            }
+        }
+
+        function runDiagnostic() {
+            if (window.sunatAI) {
+                sunatAI.diagnostico().then(diagnostico => {
+                    alert('Diagnóstico completado. Revisa la consola para más detalles.');
+                    console.log('Diagnóstico del sistema:', diagnostico);
+                });
+            } else {
+                alert('Sistema no está disponible.');
+            }
+        }
+
+        function exportData() {
+            if (window.sunatAI) {
+                const datos = sunatAI.exportar();
+                console.log('Datos exportados:', datos);
+                alert('Datos exportados. Revisa la consola para ver los datos.');
+            } else {
+                alert('Sistema no está disponible.');
+            }
+        }
+
+        function refreshStatus() {
+            updateSystemStatus();
+        }
+
+        function updateSystemStatus() {
+            const statusDiv = document.getElementById('system-status');
+            
+            if (window.sunatAI) {
+                const estado = sunatAI.estado();
+                statusDiv.innerHTML = `
+                    <p><span class="status-indicator ${estado.initialized ? 'status-online' : 'status-offline'}"></span>
+                    <strong>Sistema:</strong> ${estado.initialized ? 'Inicializado' : 'No inicializado'}</p>
+                    <p><span class="status-indicator status-online"></span>
+                    <strong>Componentes:</strong> ${estado.components.join(', ')}</p>
+                    <p><span class="status-indicator status-online"></span>
+                    <strong>Memoria:</strong> ${estado.performance?.latestMemoryUsage ? 
+                        (estado.performance.latestMemoryUsage / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'}</p>
+                    <p><span class="status-indicator ${estado.errors?.totalErrors > 0 ? 'status-offline' : 'status-online'}"></span>
+                    <strong>Errores:</strong> ${estado.errors?.totalErrors || 0}</p>
+                `;
+            } else {
+                statusDiv.innerHTML = '<p><span class="status-indicator status-loading"></span>Sistema cargando...</p>';
+            }
+        }
+
+        // Actualiza el estado del sistema cada 5 segundos
+        setInterval(updateSystemStatus, 5000);
+
+        // Actualiza el estado inicial
+        setTimeout(updateSystemStatus, 1000);
+    </script>
+</body>
+</html>

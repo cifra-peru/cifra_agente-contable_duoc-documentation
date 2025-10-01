@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-09-21T15:57:19.952Z",
+  "internetConnection": true,
+  "sunatUrls": {
+    "Página Principal": {
+      "status": "error",
+      "error": "page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n\u001b[2m  - navigating to \"\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "url": ""
+    },
+    "Portal SUNAT": {
+      "status": "error",
+      "error": "page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n\u001b[2m  - navigating to \"\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "url": ""
+    },
+    "API Seguridad": {
+      "status": "error",
+      "error": "page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n\u001b[2m  - navigating to \"\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "url": ""
+    },
+    "Menú Principal": {
+      "status": "success",
+      "statusCode": 200,
+      "url": "https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm?pestana=*&agrupacion=*"
+    }
+  },
+  "workingUrls": 1,
+  "totalUrls": 4,
+  "recommendations": [
+    "Algunas URLs de SUNAT no están disponibles",
+    "Verificar si hay mantenimiento programado"
+  ]
+}

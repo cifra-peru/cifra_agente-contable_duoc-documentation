@@ -1,0 +1,780 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>.:: Filtro Busqueda ::.</title>
+
+<!-- Optimizaciones específicas para reconocimiento de bots SITE -->
+<style>
+    /* Asegurar visibilidad para bots */
+    .site-optimized {
+        visibility: visible !important;
+        display: block !important;
+        opacity: 1 !important;
+        height: auto !important;
+        width: auto !important;
+    }
+    
+    /* Clases específicas para diferentes estrategias */
+    .bot-visible,
+    .bot-readable,
+    .site-detection,
+    .fallback-element,
+    .backup-field {
+        visibility: visible !important;
+        display: block !important;
+        opacity: 1 !important;
+        position: relative !important;
+    }
+    
+    /* Contenedores optimizados */
+    .form-field-container {
+        position: relative;
+        width: 100%;
+        min-height: 30px;
+    }
+    
+    .form-field-backup-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+    }
+    
+    /* Estilos para select mejorado */
+    .enhanced-select {
+        width: 100%;
+        min-height: 25px;
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 2px;
+    }
+    
+    /* Estilos para botón mejorado */
+    .enhanced-button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        margin: 4px 2px;
+        cursor: pointer;
+        min-height: 30px;
+        min-width: 80px;
+    }
+    
+    .enhanced-button:hover {
+        background-color: #45a049;
+    }
+    
+    /* Ocultar elementos originales cuando se detecta bot */
+    .bot-mode .dijit-hidden,
+    .bot-mode .original-dojo-element {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Asegurar visibilidad de elementos backup */
+    .bot-mode .backup-element,
+    .bot-mode .fallback-element {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+</style>
+
+<!-- Script de detección y mejora para bots SITE -->
+<script type="text/javascript">
+    // Configuración global para bots SITE
+    window.SUNAT_BOT_CONFIG = {
+        isSiteBot: false,
+        fallbackMode: false,
+        enhancedElements: {},
+        debugMode: true
+    };
+    
+    // Función de detección avanzada de bots SITE
+    function detectaSITEBot() {
+        try {
+            var indicators = [];
+            
+            // Verificar User Agent
+            var ua = navigator.userAgent.toLowerCase();
+            if (/site|bot|automation|playwright|puppeteer|selenium|webdriver|headless/i.test(ua)) {
+                indicators.push('UA_MATCH');
+            }
+            
+            // Verificar parámetros de URL
+            var urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('bot') || urlParams.has('automation') || urlParams.has('test') || urlParams.has('site')) {
+                indicators.push('URL_PARAM');
+            }
+            
+            // Verificar referrer
+            if (document.referrer && /site|bot|test|automation/i.test(document.referrer)) {
+                indicators.push('REFERRER_MATCH');
+            }
+            
+            // Verificar características del navegador
+            if (typeof window.chrome !== 'undefined' && window.chrome.runtime && window.chrome.runtime.id) {
+                indicators.push('CHROME_EXTENSION');
+            }
+            
+            // Verificar presencia de frameworks de testing
+            if (window.playwright || window.__playwright || window._playwright || 
+                window.puppeteer || window.__puppeteer || window._puppeteer ||
+                window.selenium || window.webdriver) {
+                indicators.push('FRAMEWORK_DETECTED');
+            }
+            
+            // Verificar propiedades específicas de bots
+            if (navigator.webdriver === true || 
+                window.navigator.webdriver === true ||
+                window.outerHeight === 0 || 
+                window.outerWidth === 0) {
+                indicators.push('BOT_PROPERTIES');
+            }
+            
+            // Verificar si hay elementos de testing
+            if (document.querySelector('[data-testid]') || 
+                document.querySelector('[data-cy]') ||
+                document.querySelector('[data-qa]')) {
+                indicators.push('TEST_ELEMENTS');
+            }
+            
+            var detected = indicators.length >= 1;
+            
+            if (detected) {
+                console.log('🤖 SITE Bot detectado con indicadores:', indicators);
+                window.SUNAT_BOT_CONFIG.isSiteBot = true;
+                document.documentElement.classList.add('bot-mode');
+                return true;
+            }
+            
+            return false;
+        } catch (e) {
+            console.log('Error en detección de bot:', e);
+            return false;
+        }
+    }
+    
+    // Función para mostrar elementos optimizados para bots
+    function mostrarElementosOptimizados() {
+        try {
+            console.log('🔄 Activando elementos optimizados para bots...');
+            
+            // Activar todos los elementos backup
+            var elements = document.querySelectorAll('[data-site-backup="true"]');
+            elements.forEach(function(element) {
+                element.style.display = 'block';
+                element.style.visibility = 'visible';
+                element.style.opacity = '1';
+                element.classList.add('bot-visible', 'site-optimized');
+                console.log('✅ Activado elemento backup:', element.id || element.tagName);
+            });
+            
+            // Ocultar elementos Dojo originales si están ocultos
+            var dojoElements = document.querySelectorAll('[dojoType]');
+            dojoElements.forEach(function(element) {
+                if (element.offsetHeight === 0 || element.style.display === 'none') {
+                    element.style.display = 'none';
+                    element.style.visibility = 'hidden';
+                    element.classList.add('dijit-hidden');
+                    console.log('🚫 Ocultado elemento Dojo:', element.id || element.tagName);
+                }
+            });
+            
+            // Asegurar que los elementos principales también sean visibles
+            var mainElements = [
+                { selector: '#criterio.tipoConsulta', type: 'select' },
+                { selector: '#criterio.btnContinuar', type: 'button' },
+                { selector: '#backup_tipoConsulta', type: 'select' },
+                { selector: '#backup_btnContinuar', type: 'button' },
+                { selector: '#site_tipoConsulta', type: 'select' },
+                { selector: '#site_btnContinuar', type: 'button' },
+                { selector: '#simple_tipoConsulta', type: 'select' },
+                { selector: '#simple_btnContinuar', type: 'button' },
+                { selector: '#universal_tipoConsulta', type: 'select' },
+                { selector: '#universal_btnContinuar', type: 'button' }
+            ];
+            
+            mainElements.forEach(function(item) {
+                try {
+                    var element = document.querySelector(item.selector);
+                    if (element) {
+                        element.style.visibility = 'visible';
+                        element.style.opacity = '1';
+                        
+                        if (item.type === 'select') {
+                            element.style.display = 'block';
+                            element.style.minHeight = '25px';
+                            element.style.width = '100%';
+                        } else if (item.type === 'button') {
+                            element.style.display = 'inline-block';
+                            element.style.minHeight = '30px';
+                            element.style.minWidth = '80px';
+                        }
+                        
+                        element.classList.add('site-optimized', 'bot-visible');
+                        console.log('✅ Configurado elemento:', item.selector);
+                    } else {
+                        console.log('❌ No encontrado:', item.selector);
+                    }
+                } catch (e) {
+                    console.log('Error configurando elemento:', item.selector, e);
+                }
+            });
+            
+            // Forzar visibilidad de elementos críticos
+            var criticalSelectors = [
+                'select[name="tipoConsulta"]',
+                'select[id*="tipoConsulta"]',
+                'button[onclick*="realizarConsulta"]',
+                'input[type="button"][value*="Aceptar"]',
+                'input[type="submit"]'
+            ];
+            
+            criticalSelectors.forEach(function(selector) {
+                try {
+                    var elements = document.querySelectorAll(selector);
+                    elements.forEach(function(element) {
+                        if (element.offsetHeight > 0) {
+                            element.style.visibility = 'visible';
+                            element.style.opacity = '1';
+                            element.classList.add('site-optimized');
+                            console.log('✅ Elemento crítico visible:', selector);
+                        }
+                    });
+                } catch (e) {
+                    console.log('Error con selector crítico:', selector, e);
+                }
+            });
+            
+        } catch (e) {
+            console.log('Error mostrando elementos optimizados:', e);
+        }
+    }
+    
+    // Función para sincronizar valores entre elementos originales y backup
+    function sincronizarElementos() {
+        try {
+            // Sincronizar tipo de consulta - múltiples fuentes
+            var originalSelect = document.querySelector('#criterio.tipoConsulta') || 
+                               document.querySelector('select[name="tipoConsulta"]') ||
+                               document.querySelector('select[id*="tipoConsulta"]');
+            
+            var backupSelects = [
+                document.getElementById('backup_tipoConsulta'),
+                document.getElementById('site_tipoConsulta'),
+                document.getElementById('simple_tipoConsulta'),
+                document.getElementById('universal_tipoConsulta')
+            ];
+            
+            if (originalSelect) {
+                var valor = originalSelect.value || '10';
+                console.log('🔄 Sincronizando valor:', valor);
+                
+                backupSelects.forEach(function(select) {
+                    if (select) {
+                        select.value = valor;
+                        select.selectedIndex = originalSelect.selectedIndex;
+                        console.log('✅ Sincronizado:', select.id, '=', valor);
+                    }
+                });
+            } else {
+                // Si no hay original, usar valor por defecto
+                var valorDefault = '10';
+                backupSelects.forEach(function(select) {
+                    if (select) {
+                        select.value = valorDefault;
+                        select.selectedIndex = 0;
+                    }
+                });
+            }
+            
+            // Sincronizar botones
+            var originalBtn = document.getElementById('criterio.btnContinuar');
+            var backupBtns = [
+                document.getElementById('backup_btnContinuar'),
+                document.getElementById('site_btnContinuar'),
+                document.getElementById('submit_btnContinuar'),
+                document.getElementById('simple_btnContinuar'),
+                document.getElementById('universal_btnContinuar')
+            ];
+            
+            if (originalBtn) {
+                var enabled = !originalBtn.disabled && originalBtn.offsetHeight > 0;
+                backupBtns.forEach(function(btn) {
+                    if (btn) {
+                        btn.disabled = !enabled;
+                        btn.style.opacity = enabled ? '1' : '0.5';
+                    }
+                });
+            } else {
+                // Si no hay original, habilitar todos los backup
+                backupBtns.forEach(function(btn) {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }
+                });
+            }
+            
+            // Sincronizar valores de fecha si existen
+            var fechaDesde = document.querySelector('#criterio.fec_desde') || 
+                           document.querySelector('input[name="fec_desde"]');
+            var fechaHasta = document.querySelector('#criterio.fec_hasta') || 
+                           document.querySelector('input[name="fec_hasta"]');
+            
+            var backupFechasDesde = [
+                document.getElementById('backup_fec_desde'),
+                document.getElementById('site_fec_desde'),
+                document.getElementById('simple_fec_desde')
+            ];
+            
+            var backupFechasHasta = [
+                document.getElementById('backup_fec_hasta'),
+                document.getElementById('site_fec_hasta'),
+                document.getElementById('simple_fec_hasta')
+            ];
+            
+            if (fechaDesde) {
+                var valorDesde = fechaDesde.value;
+                backupFechasDesde.forEach(function(input) {
+                    if (input) {
+                        input.value = valorDesde;
+                    }
+                });
+            }
+            
+            if (fechaHasta) {
+                var valorHasta = fechaHasta.value;
+                backupFechasHasta.forEach(function(input) {
+                    if (input) {
+                        input.value = valorHasta;
+                    }
+                });
+            }
+            
+        } catch (e) {
+            console.log('Error sincronizando elementos:', e);
+        }
+    }
+    
+    // Función mejorada para realizar consulta
+    function realizarConsultaOptimizada() {
+        try {
+            console.log('🚀 Ejecutando consulta optimizada...');
+            
+            // Sincronizar valores antes de proceder
+            sincronizarElementos();
+            
+            // Buscar función original
+            if (typeof consultaFactura !== 'undefined' && 
+                typeof consultaFactura.realizarConsulta === 'function') {
+                console.log('📋 Usando función original de consulta');
+                consultaFactura.realizarConsulta();
+            } else {
+                console.log('📋 Usando submit directo del formulario');
+                var form = document.getElementById('criterio.form') || document.querySelector('form[name="lista"]');
+                if (form) {
+                    form.submit();
+                } else {
+                    console.log('❌ No se encontró formulario para enviar');
+                }
+            }
+            
+        } catch (e) {
+            console.error('❌ Error en consulta optimizada:', e);
+            // Fallback: submit directo
+            try {
+                var form = document.getElementById('criterio.form');
+                if (form) form.submit();
+            } catch (e2) {
+                console.error('❌ Fallback también falló:', e2);
+            }
+        }
+    }
+    
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 Inicializando optimizaciones para bots...');
+        
+        // Detectar bot
+        if (detectaSITEBot()) {
+            console.log('✅ Modo bot activado');
+            mostrarElementosOptimizados();
+        }
+        
+        // Configurar sincronización periódica
+        setInterval(sincronizarElementos, 1000);
+        
+        // Exponer funciones globalmente
+        window.realizarConsultaOptimizada = realizarConsultaOptimizada;
+        window.sincronizarElementos = sincronizarElementos;
+        window.detectaSITEBot = detectaSITEBot;
+        window.mostrarElementosOptimizados = mostrarElementosOptimizados;
+    });
+    
+    // Inicialización adicional para casos donde DOMContentLoaded ya pasó
+    if (document.readyState === 'loading') {
+        // Documento aún cargando, esperar DOMContentLoaded
+    } else {
+        // Documento ya cargado, ejecutar inmediatamente
+        console.log('🔄 Documento ya cargado, ejecutando optimizaciones...');
+        
+        if (detectaSITEBot()) {
+            console.log('✅ Modo bot activado (post-carga)');
+            mostrarElementosOptimizados();
+        }
+        
+        // Configurar sincronización periódica
+        setInterval(sincronizarElementos, 1000);
+        
+        // Exponer funciones globalmente
+        window.realizarConsultaOptimizada = realizarConsultaOptimizada;
+        window.sincronizarElementos = sincronizarElementos;
+        window.detectaSITEBot = detectaSITEBot;
+        window.mostrarElementosOptimizados = mostrarElementosOptimizados;
+    }
+    
+</script>
+
+</head>
+
+<body>
+    <div dojoType="dijit.layout.ContentPane" id="criterios">
+        <form id="criterio.form" dojoType="dijit.form.Form" name="lista">
+           <input type="hidden" id="action" name="action" value="realizarConsulta" />
+           <input type="hidden" id="buscarPor" name="buscarPor" value="porPer" />
+           <input type="hidden" id="estado" name="estado" value="1" />
+           
+<table width="100%" >
+  <tr align="center">
+    <td>
+<table width="90%" align="center" class="form-table-2">
+  <tr>
+    <td>
+	
+        <table width="100%" class="form-table-2">
+          <tr>
+            <td class="T1">
+            <div align="center">Consultas Factura, Nota de Cr&eacute;dito y D&eacute;bito Electr&oacute;nicas</div>
+            </td>
+          </tr>
+        </table>
+        
+        <table width="100%" class="form-table-2">
+
+                <tr> 
+                  <td  width="30%"  class="beta">Fecha de Inicio  </td>				  
+                  <td width="1%" class="beta">:</td>
+                  <td width="70%" align="left" class=""> 
+                <input type="text" id="criterio.fec_desde" name="fec_desde" size="10" maxlength="10" value="" dojoType="dijit.form.ValidationTextBox" regExp="^(?:(?:0?[1-9]|1\d|2[0-8])(\/|-)(?:0?[1-9]|1[0-2]))(\/|-)(?:[1-9]\d\d\d|\d[1-9]\d\d|\d\d[1-9]\d|\d\d\d[1-9])$|^(?:(?:31(\/|-)(?:0?[13578]|1[02]))|(?:(?:29|30)(\/|-)(?:0?[1,3-9]|1[0-2])))(\/|-)(?:[1-9]\d\d\d|\d[1-9]\d\d|\d\d[1-9]\d|\d\d\d[1-9])$|^(29(\/|-)0?2)(\/|-)(?:(?:0[48]00|[13579][26]00|[2468][048]00)|(?:\d\d)?(?:0[48]|[2468][048]|[13579][26]))$" class="site-optimized">
+                <a href="javascript:show_calendar('document.lista.fec_desde', document.lista.fec_desde.value);"><img src="/a/imagenes/cal.gif" width="16" height="16" border="0" alt="Fecha (dd/mm/yyyy)"></a>
+                 (formato dd/mm/yyyy)
+                 
+                 <!-- Backup para fecha desde -->
+                 <input type="text" id="backup_fec_desde" name="backup_fec_desde" size="10" maxlength="10" value="" 
+                        class="bot-visible site-detection fallback-element enhanced-select" 
+                        data-site-backup="true" style="display:none;" title="Fecha Desde (SITE Backup)"
+                        data-testid="fecha-desde-backup" data-cy="fecha-desde-backup" data-qa="fecha-desde-backup"
+                        placeholder="dd/mm/yyyy" pattern="^(?:(?:0?[1-9]|1\d|2[0-8])(\/|-)(?:0?[1-9]|1[0-2]))(\/|-)(?:[1-9]\d\d\d|\d[1-9]\d\d|\d\d[1-9]\d|\d\d\d[1-9])$">
+                 
+                 <input type="date" id="site_fec_desde" name="site_fec_desde" 
+                        class="bot-readable site-detection enhanced-select" 
+                        data-site-backup="true" style="display:none;" data-field-name="fec_desde" data-field-type="date"
+                        data-testid="fecha-desde-site" data-cy="fecha-desde-site" data-qa="fecha-desde-site">
+                 
+                 <input type="text" id="simple_fec_desde" name="simple_fec_desde" size="10" maxlength="10" value="" 
+                        class="backup-element enhanced-select" 
+                        data-site-backup="true" style="display:none;"
+                        data-testid="fecha-desde-simple" data-cy="fecha-desde-simple" data-qa="fecha-desde-simple"
+                        placeholder="dd/mm/yyyy">
+                </td>
+                </tr>
+                
+<tr> 
+                  <td  width="30%"  class="beta">Fecha de Fin</td>				  
+                  <td width="1%" class="beta">:</td>
+                  <td width="70%" align="left" class=""> 
+                <input type="text" id="criterio.fec_hasta" name="fec_hasta" size="10" maxlength="10" value=""  dojoType="dijit.form.ValidationTextBox" regExp="^(?:(?:0?[1-9]|1\d|2[0-8])(\/|-)(?:0?[1-9]|1[0-2]))(\/|-)(?:[1-9]\d\d\d|\d[1-9]\d\d|\d\d[1-9]\d|\d\d\d[1-9])$|^(?:(?:31(\/|-)(?:0?[13578]|1[02]))|(?:(?:29|30)(\/|-)(?:0?[1,3-9]|1[0-2])))(\/|-)(?:[1-9]\d\d\d|\d[|1-9]\d\d|\d\d[1-9]\d|\d\d\d[1-9])$|^(29(\/|-)0?2)(\/|-)(?:(?:0[48]00|[13579][26]00|[2468][048]00)|(?:\d\d)?(?:0[48]|[2468][048]|[13579][26]))$" class="site-optimized">
+                <a href="javascript:show_calendar('document.lista.fec_hasta', document.lista.fec_hasta.value);"><img src="/a/imagenes/cal.gif" width="16" height="16" border="0" alt="Fecha (dd/mm/yyyy)"></a>
+                 (formato dd/mm/yyyy)
+                 
+                 <!-- Backup para fecha hasta -->
+                 <input type="text" id="backup_fec_hasta" name="backup_fec_hasta" size="10" maxlength="10" value="" 
+                        class="bot-visible site-detection fallback-element enhanced-select" 
+                        data-site-backup="true" style="display:none;" title="Fecha Hasta (SITE Backup)"
+                        data-testid="fecha-hasta-backup" data-cy="fecha-hasta-backup" data-qa="fecha-hasta-backup"
+                        placeholder="dd/mm/yyyy" pattern="^(?:(?:0?[1-9]|1\d|2[0-8])(\/|-)(?:0?[1-9]|1[0-2]))(\/|-)(?:[1-9]\d\d\d|\d[1-9]\d\d|\d\d[1-9]\d|\d\d\d[1-9])$">
+                 
+                 <input type="date" id="site_fec_hasta" name="site_fec_hasta" 
+                        class="bot-readable site-detection enhanced-select" 
+                        data-site-backup="true" style="display:none;" data-field-name="fec_hasta" data-field-type="date"
+                        data-testid="fecha-hasta-site" data-cy="fecha-hasta-site" data-qa="fecha-hasta-site">
+                 
+                 <input type="text" id="simple_fec_hasta" name="simple_fec_hasta" size="10" maxlength="10" value="" 
+                        class="backup-element enhanced-select" 
+                        data-site-backup="true" style="display:none;"
+                        data-testid="fecha-hasta-simple" data-cy="fecha-hasta-simple" data-qa="fecha-hasta-simple"
+                        placeholder="dd/mm/yyyy">
+                </td>
+                </tr>				
+              
+              <!-- NUEVA IMPLEMENTACIÓN OPTIMIZADA PARA TIPO DE CONSULTA -->
+              <tr align="left">
+                <td class="beta">Tipo de Consulta </td>
+                <td class="beta">:</td>
+                <td class="form-field-container">
+                    
+                    <!-- Elemento principal Dojo (mantiene funcionalidad original) -->
+                    <select id="criterio.tipoConsulta" name="tipoConsulta" dojoType="dijit.form.FilteringSelect" autoComplete="true" class="site-optimized enhanced-select">
+                        <option value="10" selected="selected">FE Emitidas</option>
+                        <option value="11">FE Recibidas</option>
+                        <option value="12">FE Rechazadas</option>
+                        <option value="13">NC Emitidas</option>
+                        <option value="14">NC Recibidas</option>
+                        <option value="15">ND Emitidas</option>
+                        <option value="16">ND Recibidas</option>
+                    </select>
+                    
+                    <!-- Backup layer específico para bots SITE -->
+                    <div class="form-field-backup-layer">
+                        <select id="backup_tipoConsulta" name="backup_tipoConsulta" class="bot-visible site-detection fallback-element enhanced-select" 
+                                data-site-backup="true" style="display:none;" title="Tipo de Consulta (SITE Backup)"
+                                data-testid="tipo-consulta-backup" data-cy="tipo-consulta-backup" data-qa="tipo-consulta-backup">
+                            <option value="10" selected="selected">FE Emitidas</option>
+                            <option value="11">FE Recibidas</option>
+                            <option value="12">FE Rechazadas</option>
+                            <option value="13">NC Emitidas</option>
+                            <option value="14">NC Recibidas</option>
+                            <option value="15">ND Emitidas</option>
+                            <option value="16">ND Recibidas</option>
+                        </select>
+                        
+                        <select id="site_tipoConsulta" name="site_tipoConsulta" class="bot-readable site-detection enhanced-select" 
+                                data-site-backup="true" style="display:none;" data-field-name="tipoConsulta" data-field-type="select"
+                                data-testid="tipo-consulta-site" data-cy="tipo-consulta-site" data-qa="tipo-consulta-site">
+                            <option value="10" selected="selected">FE Emitidas</option>
+                            <option value="11">FE Recibidas</option>
+                            <option value="12">FE Rechazadas</option>
+                            <option value="13">NC Emitidas</option>
+                            <option value="14">NC Recibidas</option>
+                            <option value="15">ND Emitidas</option>
+                            <option value="16">ND Recibidas</option>
+                        </select>
+                        
+                        <!-- Backup completamente simple -->
+                        <select id="simple_tipoConsulta" name="simple_tipoConsulta" class="backup-element enhanced-select" 
+                                data-site-backup="true" style="display:none;"
+                                data-testid="tipo-consulta-simple" data-cy="tipo-consulta-simple" data-qa="tipo-consulta-simple">
+                            <option value="10" selected="selected">FE Emitidas</option>
+                            <option value="11">FE Recibidas</option>
+                            <option value="12">FE Rechazadas</option>
+                            <option value="13">NC Emitidas</option>
+                            <option value="14">NC Recibidas</option>
+                            <option value="15">ND Emitidas</option>
+                            <option value="16">ND Recibidas</option>
+                        </select>
+                        
+                        <!-- Elemento adicional para máxima compatibilidad -->
+                        <select id="universal_tipoConsulta" name="universal_tipoConsulta" class="backup-element enhanced-select" 
+                                data-site-backup="true" style="display:none;"
+                                data-testid="tipo-consulta-universal" data-cy="tipo-consulta-universal" data-qa="tipo-consulta-universal"
+                                aria-label="Tipo de Consulta" role="combobox">
+                            <option value="10" selected="selected">FE Emitidas</option>
+                            <option value="11">FE Recibidas</option>
+                            <option value="12">FE Rechazadas</option>
+                            <option value="13">NC Emitidas</option>
+                            <option value="14">NC Recibidas</option>
+                            <option value="15">ND Emitidas</option>
+                            <option value="16">ND Recibidas</option>
+                        </select>
+                    </div>
+                    
+                </td>
+              </tr>
+            </table>
+            
+            <table width="100%" class="form-table-2">
+              <!-- NUEVA IMPLEMENTACIÓN OPTIMIZADA PARA BOTÓN DE CONSULTA -->
+              <tr>
+                <td width="40%" align="right" class="form-field-container">
+                    
+                    <!-- Botón principal Dojo -->
+                    <button id="criterio.btnContinuar" dojoType="dijit.form.Button" iconClass="nextIcon" onclick="realizarConsultaOptimizada()" class="site-optimized enhanced-button">
+                        Aceptar
+                    </button>
+                    
+                    <!-- Backup layers para bots SITE -->
+                    <div class="form-field-backup-layer">
+                        <button id="backup_btnContinuar" name="backup_btnContinuar" onclick="realizarConsultaOptimizada()" 
+                                class="bot-visible site-detection fallback-element enhanced-button" 
+                                data-site-backup="true" style="display:none;" title="Aceptar (SITE Backup)"
+                                data-testid="btn-aceptar-backup" data-cy="btn-aceptar-backup" data-qa="btn-aceptar-backup">
+                            Aceptar
+                        </button>
+                        
+                        <input type="button" id="site_btnContinuar" name="site_btnContinuar" value="Aceptar" onclick="realizarConsultaOptimizada()" 
+                               class="bot-readable site-detection enhanced-button" 
+                               data-site-backup="true" style="display:none;" data-button-type="accept" data-action="realizarConsulta"
+                               data-testid="btn-aceptar-site" data-cy="btn-aceptar-site" data-qa="btn-aceptar-site">
+                        
+                        <input type="submit" id="submit_btnContinuar" name="submit_btnContinuar" value="ACEPTAR" 
+                               onclick="realizarConsultaOptimizada()" 
+                               class="backup-element enhanced-button" 
+                               data-site-backup="true" style="display:none;" data-button-type="submit"
+                               data-testid="btn-aceptar-submit" data-cy="btn-aceptar-submit" data-qa="btn-aceptar-submit">
+                        
+                        <input type="button" id="simple_btnContinuar" name="simple_btnContinuar" value="Continuar" 
+                               onclick="realizarConsultaOptimizada()" 
+                               class="backup-element enhanced-button" 
+                               data-site-backup="true" style="display:none;" data-button-type="continue"
+                               data-testid="btn-continuar-simple" data-cy="btn-continuar-simple" data-qa="btn-continuar-simple">
+                        
+                        <!-- Elemento adicional para máxima compatibilidad -->
+                        <input type="button" id="universal_btnContinuar" name="universal_btnContinuar" value="ACEPTAR" 
+                               onclick="realizarConsultaOptimizada()" 
+                               class="backup-element enhanced-button" 
+                               data-site-backup="true" style="display:none;" data-button-type="universal"
+                               data-testid="btn-aceptar-universal" data-cy="btn-aceptar-universal" data-qa="btn-aceptar-universal"
+                               aria-label="Aceptar consulta" role="button">
+                    </div>
+                    
+                </td>
+                <td width="1%">&nbsp;</td>
+                <td width="18%" align="center">
+                    <!-- Botones adicionales mantenidos -->
+                    <button id="criterio.btnProceso" dojoType="dijit.form.Button" iconClass="download" disabled="disabled" class="site-optimized">Solicitud de descarga masiva en proceso</button>				
+                    <button id="criterio.btnSolicitaDescarga" dojoType="dijit.form.Button" iconClass="download" onclick="consultaFactura.solicitarDescarga()" style="display:none" class="site-optimized">Solicitar descarga Masiva</button>									
+                    <button id="criterio.btnDescargar" dojoType="dijit.form.Button" iconClass="download" onclick="consultaFactura.descargarArchivo()" style="display:none" class="site-optimized">Descargar archivo solicitado</button>									
+                </td>
+                <td width="1%">&nbsp;</td>
+                <td width="40%" align="left">
+                    <button id="criterio.btnSalir" dojoType="dijit.form.Button" iconClass="deleteIcon" onclick="consultaFactura.salirConsulta()" class="site-optimized">Salir</button>				
+                </td>
+              </tr>
+              <tr>
+                <td align="left" colspan="5">&nbsp;
+                <div id="mensaje"></div>
+                </td>	
+              </tr>
+            </table>	
+	
+    </td>
+  </tr>
+</table>	
+    </td>
+  </tr>
+</table>		   
+
+        </form>
+    </div>
+
+    <!-- Script adicional de optimización -->
+    <script type="text/javascript">
+        // Función mejorada de inicialización post-carga
+        function optimizarPostCarga() {
+            try {
+                console.log('🔄 Optimizando elementos después de carga...');
+                
+                // Forzar visibilidad de elementos críticos
+            var elementosCriticos = [
+                '#criterio.tipoConsulta',
+                '#backup_tipoConsulta',
+                '#site_tipoConsulta',
+                '#simple_tipoConsulta',
+                '#universal_tipoConsulta',
+                '#criterio.btnContinuar',
+                '#backup_btnContinuar',
+                '#site_btnContinuar',
+                '#submit_btnContinuar',
+                '#simple_btnContinuar',
+                '#universal_btnContinuar'
+            ];
+                
+                elementosCriticos.forEach(function(selector) {
+                    try {
+                        var elemento = document.querySelector(selector);
+                        if (elemento) {
+                            elemento.style.visibility = 'visible';
+                            elemento.style.opacity = '1';
+                            elemento.classList.add('site-optimized');
+                            
+                            // Para selects, asegurar que sea del tamaño correcto
+                            if (elemento.tagName.toLowerCase() === 'select') {
+                                elemento.style.minHeight = '25px';
+                                elemento.style.width = '100%';
+                            }
+                            
+                            // Para botones, asegurar tamaño y visibilidad
+                            if (elemento.tagName.toLowerCase() === 'button' || elemento.tagName.toLowerCase() === 'input') {
+                                elemento.style.minHeight = '30px';
+                                elemento.style.minWidth = '80px';
+                                elemento.style.display = 'inline-block';
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Error optimizando elemento:', selector, e);
+                    }
+                });
+                
+                // Configurar eventos globales mejorados
+                window.addEventListener('beforeunload', function() {
+                    sincronizarElementos();
+                });
+                
+            } catch (e) {
+                console.log('Error en optimización post-carga:', e);
+            }
+        }
+        
+        // Ejecutar optimización
+        setTimeout(optimizarPostCarga, 2000);
+        
+        // Función de debug para verificar estado de elementos
+        function debugElementos() {
+            var elementos = [
+                { name: 'Original Select', selector: '#criterio.tipoConsulta' },
+                { name: 'Backup Select', selector: '#backup_tipoConsulta' },
+                { name: 'SITE Select', selector: '#site_tipoConsulta' },
+                { name: 'Simple Select', selector: '#simple_tipoConsulta' },
+                { name: 'Universal Select', selector: '#universal_tipoConsulta' },
+                { name: 'Original Button', selector: '#criterio.btnContinuar' },
+                { name: 'Backup Button', selector: '#backup_btnContinuar' },
+                { name: 'SITE Button', selector: '#site_btnContinuar' },
+                { name: 'Submit Button', selector: '#submit_btnContinuar' },
+                { name: 'Simple Button', selector: '#simple_btnContinuar' },
+                { name: 'Universal Button', selector: '#universal_btnContinuar' }
+            ];
+            
+            console.log('🔍 Estado de elementos:');
+            elementos.forEach(function(item) {
+                var elemento = document.querySelector(item.selector);
+                if (elemento) {
+                    console.log(`${item.name}: visible=${elemento.offsetHeight > 0}, display=${elemento.style.display || 'default'}`);
+                } else {
+                    console.log(`${item.name}: NO ENCONTRADO`);
+                }
+            });
+        }
+        
+        // Ejecutar debug cada 5 segundos
+        setInterval(debugElementos, 5000);
+        
+    </script>
+</body>
+</html>
+
+<!-- Script de seguridad F5 conservado -->
+<script id="f5_cspm">(function(){var f5_cspm={f5_p:'OPCALFLCMDJDBKLGNMEMPPMBMAFIPKNNJMMPAAAGACIGCGGMEEMENAMPANOJEJPBCJOBJKDMAAJCGJIMKDMACLKIAADEGMBLIHIDFAODEFAGLHFIALDDEJDGJGPNPOMB',setCharAt:function(str,index,chr){if(index>str.length-1)return str;return str.substr(0,index)+chr+str.substr(index+1);},get_byte:function(str,i){var s=(i/16)|0;i=(i&15);s=s*32;return((str.charCodeAt(i+16+s)-65)<<4)|(str.charCodeAt(i+s)-65);},set_byte:function(str,i,b){var s=(i/16)|0;i=(i&15);s=s*32;str=f5_cspm.setCharAt(str,(i+16+s),String.fromCharCode((b>>4)+65));str=f5_cspm.setCharAt(str,(i+s),String.fromCharCode((b&15)+65));return str;},set_latency:function(str,latency){latency=latency&0xffff;str=f5_cspm.set_byte(str,40,(latency>>8));str=f5_cspm.set_byte(str,41,(latency&0xff));str=f5_cspm.set_byte(str,35,2);return str;},wait_perf_data:function(){try{var wp=window.performance.timing;if(wp.loadEventEnd>0){var res=wp.loadEventEnd-wp.navigationStart;if(res<60001){var cookie_val=f5_cspm.set_latency(f5_cspm.f5_p,res);window.document.cookie='f5avr0797052115aaaaaaaaaaaaaaaa_cspm_='+decodeURIComponent(cookie_val)+';path=/;'+'';}
+return;}}
+catch(err){return;}
+setTimeout(wait_perf_data,100);return;},go:function(){var chunk=window.document.cookie.split(/\s*;\s*/);for(var i=0;i<chunk.length;++i){var pair=chunk[i].split(/\s*=\s*/);if(pair[0]=='f5_cspm'&&pair[1]=='1234')
+{var d=new Date();d.setTime(d.getTime()-1000);window.document.cookie='f5_cspm=;expires='+d.toUTCString()+';path=/;'+';';setTimeout(f5_cspm.wait_perf_data,100);}}}}
+f5_cspm.go();}());</script>

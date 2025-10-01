@@ -1,0 +1,21 @@
+{
+  "metrics": {
+    "totalSessions": 0,
+    "successfulLogins": 0,
+    "failedLogins": 0,
+    "xmlFilesFound": 0,
+    "averageResponseTime": 0,
+    "errorRate": 0
+  },
+  "sessionData": [
+    {
+      "tipo": "system",
+      "datos": {
+        "action": "initialize"
+      },
+      "timestamp": "2025-09-21T16:59:34.123Z",
+      "sessionId": "session_1758473974123_90ikdcvvo"
+    }
+  ],
+  "timestamp": "2025-09-21T16:59:34.125Z"
+}

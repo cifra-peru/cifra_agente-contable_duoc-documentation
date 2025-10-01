@@ -1,0 +1,29 @@
+{
+  "timestamp": "2025-09-20T21:05:53.565Z",
+  "internetConnection": true,
+  "sunatUrls": {
+    "Página Principal": {
+      "status": "success",
+      "statusCode": 200,
+      "url": ""
+    },
+    "Portal SUNAT": {
+      "status": "success",
+      "statusCode": 200,
+      "url": ""
+    },
+    "API Seguridad": {
+      "status": "success",
+      "statusCode": 200,
+      "url": ""
+    },
+    "Menú Principal": {
+      "status": "success",
+      "statusCode": 200,
+      "url": ""
+    }
+  },
+  "workingUrls": 4,
+  "totalUrls": 4,
+  "recommendations": []
+}

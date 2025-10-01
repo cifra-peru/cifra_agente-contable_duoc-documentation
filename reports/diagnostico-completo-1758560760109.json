@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-09-22T17:06:00.106Z",
+  "system": "SUNAT AI",
+  "connectivity": {
+    "internet": true,
+    "sunatUrls": {
+      "Login": {
+        "status": "success",
+        "url": "https://api-seguridad.sunat.gob.pe/v1/clientessol/4f3b88b3-d9d6-402a-b85d-6a0bc857746a/oauth2/loginMenuSol"
+      },
+      "Menú Principal": {
+        "status": "success",
+        "url": "https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm?pestana=*&agrupacion=*"
+      },
+      "Home SUNAT": {
+        "status": "error",
+        "url": "https://www.sunat.gob.pe",
+        "error": "page.goto: net::ERR_ABORTED at https://www.sunat.gob.pe/\nCall log:\n\u001b[2m  - navigating to \"https://www.sunat.gob.pe/\", waiting until \"load\"\u001b[22m\n"
+      },
+      "Portal SUNAT": {
+        "status": "error",
+        "url": "https://e-menu.sunat.gob.pe",
+        "error": "page.title: Execution context was destroyed, most likely because of a navigation"
+      },
+      "Consultas Facturas": {
+        "status": "success",
+        "url": "https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm?pestana=*&agrupacion=*&submenu=*&accion=*&ruta=ConsultarFactura.htm"
+      },
+      "Consultas Boletas": {
+        "status": "error",
+        "url": "https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm?pestana=*&agrupacion=*&submenu=*&accion=*&ruta=ConsultarBoleta.htm",
+        "error": "page.goto: net::ERR_ABORTED at https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm?pestana=*&agrupacion=*&submenu=*&accion=*&ruta=ConsultarBoleta.htm\nCall log:\n\u001b[2m  - navigating to \"https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm?pestana=*&agrupacion=*&submenu=*&accion=*&ruta=ConsultarBoleta.htm\", waiting until \"load\"\u001b[22m\n"
+      }
+    }
+  },
+  "workingUrls": [
+    "Login",
+    "Menú Principal",
+    "Portal SUNAT",
+    "Consultas Facturas"
+  ],
+  "totalUrls": 6,
+  "successRate": "4/6",
+  "configuracion": {
+    "timeout": 1800000,
+    "playwright": {
+      "timeout": 1800000,
+      "defaultTimeout": 60000,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "blockResources": [
+        "media",
+        "analytics",
+        "tracking",
+        "ads",
+        "doubleclick"
+      ],
+      "humanTiming": {
+        "min": 800,
+        "max": 2000,
+        "afterClick": {
+          "min": 1000,
+          "max": 2000
+        },
+        "afterInput": {
+          "min": 1200,
+          "max": 2200
+        },
+        "afterSubmit": {
+          "min": 1500,
+          "max": 2500
+        }
+      }
+    },
+    "credenciales": {
+      "ruc": "20487255387",
+      "usuario": "INKASIRE"
+    }
+  }
+}
