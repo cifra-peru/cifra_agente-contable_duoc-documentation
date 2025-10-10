@@ -13,3 +13,39 @@ Thumbs.db
 # Carpetas de IDEs
 .vscode/
 .idea/
+
+# Archivos de descarga de SUNAT
+downloads/
+*.pdf
+*.xml
+*.zip
+
+# Directorios de output del bot
+output/
+logs/
+
+# Archivos de configuración sensibles
+.env
+credentials/
+*.json
+
+# Archivos de Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Node modules
+node_modules/
+
+# Archivos de sistema Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Archivos de sistema macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Archivos de sistema Linux
+*~

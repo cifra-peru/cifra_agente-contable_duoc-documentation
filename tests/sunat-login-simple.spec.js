@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+import yauzl from 'yauzl';
+
+// Cargar variables de entorno
+dotenv.config();
 
 // 🤖 SUNAT BOT - AUTOMATIZACIÓN COMPLETA CON INTEGRACIÓN PYTHON
 // ============================================
@@ -87,7 +92,7 @@ class PythonBotIntegration {
             const defaultParams = {
                 headless: true,
                 fecha_inicio: '01/01/2024',
-                fecha_fin: '31/12/2024',
+                fecha_fin: '31/01/2024',
                 formatos: ['json', 'excel'],
                 descargar_archivos: true
             };
@@ -351,7 +356,7 @@ async function guardarDatos(datos, resumen) {
 }
 
 // Función para descargar archivos XML y PDF (mejorada con lógica del bot Python)
-async function descargarArchivos(iframeContent, facturas) {
+async function descargarArchivos(page, iframeContent, facturas) {
     try {
         Logger.info('Iniciando descarga de archivos XML y PDF...');
         
@@ -359,51 +364,148 @@ async function descargarArchivos(iframeContent, facturas) {
         let descargasXML = 0;
         let descargasPDF = 0;
         let erroresDescarga = 0;
+        let erroresXML = 0;
+        let erroresPDF = 0;
+        const archivosDescargados = [];
+        
+        // Configurar descarga de archivos
+        const downloadPromise = page.waitForEvent('download');
         
         for (let i = 0; i < facturas.length; i++) {
             try {
                 const factura = facturas[i];
                 Logger.debug(`Procesando descargas para factura ${i + 1}: ${factura.nro_factura}`);
                 
-                // Buscar enlaces de descarga usando selectores del bot Python
-                const enlacesDescarga = iframeContent.locator(`a[onclick*="${factura.id}"]`);
-                const cantidadEnlaces = await enlacesDescarga.count();
+                // Buscar directamente los enlaces de descarga usando el índice
+                const enlacesXML = iframeContent.locator(`a[onclick*="consultaFactura.descargar('${i}')"]`);
+                const enlacesPDF = iframeContent.locator(`a[onclick*="consultaFactura.descargarComprobantePdf('${i}')"]`);
                 
-                Logger.debug(`Factura ${i + 1}: ${cantidadEnlaces} enlaces de descarga encontrados`);
-                
-                // Descargar XML (usando selector específico del bot Python)
+                // Descargar XML
                 try {
-                    const enlaceXML = iframeContent.locator(`a[onclick*="descargarXML(${factura.id})"]`).first();
-                    if (await enlaceXML.isVisible()) {
-                        await enlaceXML.click();
-                        await page.waitForTimeout(2000); // Tiempo de espera del bot Python
-                        descargasXML++;
-                        descargasExitosas++;
-                        Logger.debug(`✅ XML descargado para factura ${factura.nro_factura}`);
+                    if (await enlacesXML.count() > 0) {
+                        const enlaceXML = enlacesXML.first();
+                        if (await enlaceXML.isVisible()) {
+                            Logger.debug(`Haciendo clic en enlace XML para factura ${i + 1}`);
+                            
+                            // Configurar descarga
+                            const downloadXML = page.waitForEvent('download');
+                            await enlaceXML.click();
+                            
+                            // Esperar descarga
+                            const download = await downloadXML;
+                            const fileName = await download.suggestedFilename();
+                            const filePath = `downloads/${fileName}`;
+                            await download.saveAs(filePath);
+                            
+                            // Verificar si es ZIP y extraer archivos XML
+                            if (fileName.toLowerCase().endsWith('.zip')) {
+                                Logger.debug(`Archivo ZIP detectado: ${fileName}, extrayendo archivos XML...`);
+                                
+                                try {
+                                    const archivosXML = await extraerArchivosZip(filePath);
+                                    
+                                    for (const archivoXML of archivosXML) {
+                                        archivosDescargados.push({
+                                            tipo: 'XML',
+                                            factura: factura.nro_factura,
+                                            archivo: archivoXML.contenido,
+                                            nombre: archivoXML.nombre,
+                                            ruta: filePath
+                                        });
+                                        
+                                        descargasXML++;
+                                        descargasExitosas++;
+                                        Logger.success(`✅ XML extraído de ZIP para factura ${factura.nro_factura}: ${archivoXML.nombre}`);
+                                    }
+                                } catch (zipError) {
+                                    Logger.warning(`❌ Error extrayendo ZIP para factura ${factura.nro_factura}: ${zipError.message}`);
+                                    erroresXML++;
+                                    erroresDescarga++;
+                                }
+                            } else {
+                                // Archivo XML directo
+                                const fileBuffer = fs.readFileSync(filePath);
+                                
+                                archivosDescargados.push({
+                                    tipo: 'XML',
+                                    factura: factura.nro_factura,
+                                    archivo: fileBuffer,
+                                    nombre: fileName,
+                                    ruta: filePath
+                                });
+                                
+                                descargasXML++;
+                                descargasExitosas++;
+                                Logger.success(`✅ XML descargado para factura ${factura.nro_factura}: ${fileName}`);
+                            }
+                            
+                            // Limpiar archivo temporal
+                            fs.unlinkSync(filePath);
+                            
+                        } else {
+                            Logger.warning(`⚠️ Enlace XML no visible para factura ${factura.nro_factura}`);
+                        }
                     } else {
-                        Logger.warning(`⚠️ Enlace XML no visible para factura ${factura.nro_factura}`);
+                        Logger.warning(`⚠️ No se encontró enlace XML para factura ${factura.nro_factura}`);
                     }
                 } catch (e) {
                     Logger.warning(`❌ Error descargando XML para factura ${factura.nro_factura}: ${e.message}`);
+                    erroresXML++;
                     erroresDescarga++;
                 }
                 
-                // Descargar PDF (usando selector específico del bot Python)
+                // Esperar un poco entre descargas
+                await page.waitForTimeout(1000);
+                
+                // Descargar PDF
                 try {
-                    const enlacePDF = iframeContent.locator(`a[onclick*="descargarPDF(${factura.id})"]`).first();
-                    if (await enlacePDF.isVisible()) {
-                        await enlacePDF.click();
-                        await page.waitForTimeout(2000); // Tiempo de espera del bot Python
-                        descargasPDF++;
-                        descargasExitosas++;
-                        Logger.debug(`✅ PDF descargado para factura ${factura.nro_factura}`);
+                    if (await enlacesPDF.count() > 0) {
+                        const enlacePDF = enlacesPDF.first();
+                        if (await enlacePDF.isVisible()) {
+                            Logger.debug(`Haciendo clic en enlace PDF para factura ${i + 1}`);
+                            
+                            // Configurar descarga
+                            const downloadPDF = page.waitForEvent('download');
+                            await enlacePDF.click();
+                            
+                            // Esperar descarga
+                            const download = await downloadPDF;
+                            const fileName = await download.suggestedFilename();
+                            const filePath = `downloads/${fileName}`;
+                            await download.saveAs(filePath);
+                            
+                            // Leer archivo y preparar para cloud storage
+                            const fileBuffer = fs.readFileSync(filePath);
+                            
+                            archivosDescargados.push({
+                                tipo: 'PDF',
+                                factura: factura.nro_factura,
+                                archivo: fileBuffer,
+                                nombre: fileName,
+                                ruta: filePath
+                            });
+                            
+                            descargasPDF++;
+                            descargasExitosas++;
+                            Logger.success(`✅ PDF descargado para factura ${factura.nro_factura}: ${fileName}`);
+                            
+                            // Limpiar archivo temporal
+                            fs.unlinkSync(filePath);
+                            
+                        } else {
+                            Logger.warning(`⚠️ Enlace PDF no visible para factura ${factura.nro_factura}`);
+                        }
                     } else {
-                        Logger.warning(`⚠️ Enlace PDF no visible para factura ${factura.nro_factura}`);
+                        Logger.warning(`⚠️ No se encontró enlace PDF para factura ${factura.nro_factura}`);
                     }
                 } catch (e) {
                     Logger.warning(`❌ Error descargando PDF para factura ${factura.nro_factura}: ${e.message}`);
+                    erroresPDF++;
                     erroresDescarga++;
                 }
+                
+                // Esperar entre facturas
+                await page.waitForTimeout(2000);
                 
             } catch (e) {
                 Logger.warning(`❌ Error procesando descargas para factura ${i + 1}: ${e.message}`);
@@ -412,13 +514,33 @@ async function descargarArchivos(iframeContent, facturas) {
             }
         }
         
-        // Resumen de descargas (similar al bot Python)
+        // Subir archivos a cloud storage con fallback a disco
+        if (archivosDescargados.length > 0) {
+            Logger.info(`Subiendo ${archivosDescargados.length} archivos a cloud storage...`);
+            
+            try {
+                const resultadoCloud = await subirArchivosACloudStorage(archivosDescargados);
+                
+                if (resultadoCloud.errores > 0) {
+                    Logger.warning(`${resultadoCloud.errores} archivos fallaron en cloud storage, guardando en disco como fallback...`);
+                    await guardarArchivosEnDisco(archivosDescargados);
+                }
+            } catch (cloudError) {
+                Logger.warning(`Error en cloud storage: ${cloudError.message}, guardando en disco como fallback...`);
+                await guardarArchivosEnDisco(archivosDescargados);
+            }
+        }
+        
+        // Resumen de descargas
         Logger.success(`Descarga de archivos completada:`, {
             total_facturas: facturas.length,
             descargas_exitosas: descargasExitosas,
             descargas_xml: descargasXML,
             descargas_pdf: descargasPDF,
-            errores: erroresDescarga
+            errores_xml: erroresXML,
+            errores_pdf: erroresPDF,
+            errores_totales: erroresDescarga,
+            archivos_subidos: archivosDescargados.length
         });
         
         return {
@@ -426,7 +548,10 @@ async function descargarArchivos(iframeContent, facturas) {
             descargas_exitosas: descargasExitosas,
             descargas_xml: descargasXML,
             descargas_pdf: descargasPDF,
-            errores: erroresDescarga
+            errores_xml: erroresXML,
+            errores_pdf: erroresPDF,
+            errores: erroresDescarga,
+            archivos_subidos: archivosDescargados.length
         };
         
     } catch (e) {
@@ -436,7 +561,170 @@ async function descargarArchivos(iframeContent, facturas) {
             descargas_exitosas: 0,
             descargas_xml: 0,
             descargas_pdf: 0,
-            errores: facturas.length
+            errores: facturas.length,
+            archivos_subidos: 0
+        };
+    }
+}
+
+// Función para subir archivos a cloud storage
+async function subirArchivosACloudStorage(archivos) {
+    try {
+        Logger.info('Iniciando subida de archivos a cloud storage...');
+        
+        // Importar la implementación real de cloud storage
+        const { CloudStorageFileObjectStorageRepository } = await import('../cloud-storage.js');
+        const cloudStorage = new CloudStorageFileObjectStorageRepository();
+        
+        let archivosSubidos = 0;
+        let erroresSubida = 0;
+        
+        for (const archivo of archivos) {
+            try {
+                // Generar nombre único para el archivo
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const nombreUnico = `${archivo.factura}_${archivo.tipo}_${timestamp}.${archivo.tipo.toLowerCase()}`;
+                
+                Logger.debug(`Subiendo archivo: ${nombreUnico}`);
+                
+                // Estructura de datos para cloud storage
+                const fileToUpload = {
+                    fileId: generateUniqueId(),
+                    fileName: nombreUnico,
+                    file: archivo.archivo
+                };
+                
+                // Subir archivo a cloud storage
+                const result = await cloudStorage.uploadFile(fileToUpload);
+                
+                Logger.success(`✅ Archivo subido: ${nombreUnico} (${archivo.archivo.length} bytes) - ID: ${result.fileId}`);
+                archivosSubidos++;
+                
+            } catch (e) {
+                Logger.warning(`❌ Error subiendo archivo ${archivo.nombre}: ${e.message}`);
+                erroresSubida++;
+            }
+        }
+        
+        Logger.success(`Subida completada: ${archivosSubidos}/${archivos.length} archivos subidos exitosamente`);
+        
+        if (erroresSubida > 0) {
+            Logger.warning(`${erroresSubida} archivos fallaron en la subida`);
+        }
+        
+        return {
+            total: archivos.length,
+            subidos: archivosSubidos,
+            errores: erroresSubida
+        };
+        
+    } catch (e) {
+        Logger.error(`Error en subida de archivos: ${e.message}`);
+        return {
+            total: archivos.length,
+            subidos: 0,
+            errores: archivos.length
+        };
+    }
+}
+
+// Función auxiliar para generar ID único
+function generateUniqueId() {
+    return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+}
+
+// Función auxiliar para extraer archivos ZIP
+function extraerArchivosZip(zipPath) {
+    return new Promise((resolve, reject) => {
+        const archivosExtraidos = [];
+        
+        yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            
+            zipfile.readEntry();
+            zipfile.on('entry', (entry) => {
+                if (/\.xml$/i.test(entry.fileName)) {
+                    zipfile.openReadStream(entry, (err, readStream) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        
+                        const chunks = [];
+                        readStream.on('data', (chunk) => {
+                            chunks.push(chunk);
+                        });
+                        
+                        readStream.on('end', () => {
+                            archivosExtraidos.push({
+                                nombre: entry.fileName,
+                                contenido: Buffer.concat(chunks)
+                            });
+                            zipfile.readEntry();
+                        });
+                    });
+                } else {
+                    zipfile.readEntry();
+                }
+            });
+            
+            zipfile.on('end', () => {
+                resolve(archivosExtraidos);
+            });
+            
+            zipfile.on('error', (err) => {
+                reject(err);
+            });
+        });
+    });
+}
+
+// Función para guardar archivos en disco como fallback
+async function guardarArchivosEnDisco(archivos) {
+    try {
+        Logger.info('Guardando archivos en disco como fallback...');
+        
+        // Crear directorio de fallback
+        const fallbackDir = 'downloads/fallback';
+        if (!fs.existsSync(fallbackDir)) {
+            fs.mkdirSync(fallbackDir, { recursive: true });
+        }
+        
+        let archivosGuardados = 0;
+        
+        for (const archivo of archivos) {
+            try {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const nombreArchivo = `${archivo.factura}_${archivo.tipo}_${timestamp}.${archivo.tipo.toLowerCase()}`;
+                const rutaArchivo = path.join(fallbackDir, nombreArchivo);
+                
+                fs.writeFileSync(rutaArchivo, archivo.archivo);
+                archivosGuardados++;
+                
+                Logger.success(`✅ Archivo guardado en disco: ${nombreArchivo}`);
+                
+            } catch (e) {
+                Logger.warning(`❌ Error guardando archivo ${archivo.nombre} en disco: ${e.message}`);
+            }
+        }
+        
+        Logger.success(`Fallback completado: ${archivosGuardados}/${archivos.length} archivos guardados en disco`);
+        
+        return {
+            total: archivos.length,
+            guardados: archivosGuardados,
+            errores: archivos.length - archivosGuardados
+        };
+        
+    } catch (e) {
+        Logger.error(`Error en fallback a disco: ${e.message}`);
+        return {
+            total: archivos.length,
+            guardados: 0,
+            errores: archivos.length
         };
     }
 }
@@ -589,7 +877,7 @@ const CONFIG = {
                     'input[tabindex]'                  // Con tabindex
                 ],
                 
-                // Resultados (ACTUALIZADO)
+                // Resultados (MEJORADO CON MÁS SELECTORES)
                 TABLA_RESULTADOS: [
                     'table',                           // Tabla genérica
                     'table[id*="resultado"]',          // Por ID parcial
@@ -598,14 +886,71 @@ const CONFIG = {
                     'table[class*="factura"]',         // Por clase factura
                     'table[id*="grid"]',               // Por ID grid
                     'table[class*="grid"]',            // Por clase grid
-                    '#recibido.facturasGrid'           // Selector original
+                    '#recibido.facturasGrid',          // Selector original
+                    // NUEVOS SELECTORES PARA SUNAT
+                    'div[id*="grid"]',                 // Div con grid
+                    'div[class*="grid"]',              // Div con clase grid
+                    'div[id*="resultado"]',            // Div con resultado
+                    'div[class*="resultado"]',        // Div con clase resultado
+                    'div[id*="factura"]',              // Div con factura
+                    'div[class*="factura"]',           // Div con clase factura
+                    'div[dojoType*="Grid"]',           // Dojo Grid
+                    'div[dojoType*="DataGrid"]',       // Dojo DataGrid
+                    'div[dojoType*="TreeGrid"]',       // Dojo TreeGrid
+                    'table[dojoType*="Grid"]',        // Tabla Dojo Grid
+                    'table[dojoType*="DataGrid"]',     // Tabla Dojo DataGrid
+                    'div[class*="dijitGrid"]',         // Dojo Grid class
+                    'div[class*="dojoxGrid"]',         // Dojo Grid class
+                    'div[class*="dgrid"]',             // DGrid class
+                    'div[id*="dgrid"]',                // DGrid ID
+                    'div[class*="table"]',             // Div con clase table
+                    'div[role="grid"]',                // ARIA grid
+                    'div[role="table"]',               // ARIA table
+                    'div[aria-label*="resultado"]',    // ARIA label resultado
+                    'div[aria-label*="factura"]',      // ARIA label factura
+                    'div[aria-label*="grid"]',         // ARIA label grid
+                    'div[data-testid*="grid"]',        // Test ID grid
+                    'div[data-testid*="resultado"]',   // Test ID resultado
+                    'div[data-testid*="factura"]'      // Test ID factura
                 ],
                 FILAS_FACTURAS: [
                     'table tr',                        // Filas genéricas
                     'table tbody tr',                  // Filas en tbody
                     'tr[class*="fila"]',               // Por clase fila
                     'tr[id*="fila"]',                  // Por ID fila
-                    '#recibido.facturasGrid tbody tr'  // Selector original
+                    '#recibido.facturasGrid tbody tr', // Selector original
+                    // NUEVOS SELECTORES PARA SUNAT
+                    'tr[class*="factura"]',            // Por clase factura
+                    'tr[id*="factura"]',               // Por ID factura
+                    'tr[class*="resultado"]',          // Por clase resultado
+                    'tr[id*="resultado"]',             // Por ID resultado
+                    'tr[class*="grid"]',               // Por clase grid
+                    'tr[id*="grid"]',                  // Por ID grid
+                    'tr[dojoType*="Row"]',             // Dojo Row
+                    'tr[role="row"]',                  // ARIA row
+                    'tr[aria-label*="fila"]',          // ARIA label fila
+                    'tr[data-testid*="fila"]',         // Test ID fila
+                    'tr[data-testid*="factura"]',      // Test ID factura
+                    'tr[data-testid*="resultado"]',    // Test ID resultado
+                    'div[class*="row"]',               // Div con clase row
+                    'div[id*="row"]',                  // Div con ID row
+                    'div[class*="fila"]',              // Div con clase fila
+                    'div[id*="fila"]',                 // Div con ID fila
+                    'div[class*="item"]',              // Div con clase item
+                    'div[id*="item"]',                 // Div con ID item
+                    'div[class*="record"]',            // Div con clase record
+                    'div[id*="record"]',               // Div con ID record
+                    'div[dojoType*="Row"]',            // Dojo Row div
+                    'div[role="row"]',                 // ARIA row div
+                    'div[aria-label*="fila"]',         // ARIA label fila div
+                    'div[data-testid*="fila"]',        // Test ID fila div
+                    'div[data-testid*="factura"]',     // Test ID factura div
+                    'div[data-testid*="resultado"]',   // Test ID resultado div
+                    'div[class*="dijitGridRow"]',      // Dojo Grid Row
+                    'div[class*="dojoxGridRow"]',      // Dojo Grid Row
+                    'div[class*="dgrid-row"]',         // DGrid Row
+                    'div[class*="grid-row"]',          // Grid Row
+                    'div[class*="table-row"]'          // Table Row
                 ]
             },
             TIMEOUTS: {
@@ -789,17 +1134,31 @@ const CONFIG = {
     
     // NUEVA FUNCIÓN: Hacer clic en botón de consulta con múltiples estrategias PROFESIONALES - ACTUALIZADA CON MÉTODO ESPECÍFICO DIRECTO
     const hacerClickConsulta = async (iframe) => {
-        // ESTRATEGIA 1: Método específico directo (NUEVO)
+        // ESTRATEGIA 1: Método específico directo (MEJORADO)
         try {
             Logger.debug(`ESTRATEGIA 1: Método específico directo - Buscando botón por ID...`);
             
-            // 1. Intentar por ID
+            // 1. Intentar por ID con múltiples estrategias
             const botonPorId = iframe.locator('#criterio\\.btnContinuar').first();
-            await botonPorId.waitFor({ state: 'visible', timeout: 5000 });
-            await botonPorId.click();
-            await page.waitForTimeout(1000); // Esperar que se complete el click
+            await botonPorId.waitFor({ state: 'visible', timeout: 10000 });
             
+            // Asegurar que el botón esté completamente cargado
+            await botonPorId.waitFor({ state: 'attached', timeout: 5000 });
+            
+            // Hacer scroll al botón para asegurar visibilidad
+            await botonPorId.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(500);
+            
+            // Hacer clic con múltiples métodos
+            await botonPorId.click({ force: true });
+            await page.waitForTimeout(2000); // Esperar más tiempo para que se complete el click
+            
+            // Verificar que el clic se procesó
             Logger.success(`Botón "Aceptar" clickeado por ID (método específico directo)`);
+            
+            // Esperar a que se procese la acción
+            await page.waitForTimeout(3000);
+            
             return true;
         } catch (e) {
             Logger.warning(`Selector por ID falló: ${e.message}`);
@@ -1387,8 +1746,8 @@ const CONFIG = {
             const actionCallback = async (element, selector) => {
                 try {
                     await element.clear();
-                    await element.fill('31/12/2024');
-                    Logger.success(`Fecha de fin llenada: 31/12/2024`);
+                    await element.fill('31/01/2024');
+                    Logger.success(`Fecha de fin llenada: 31/01/2024`);
                     return true;
                 } catch (e) {
                     Logger.error(`Error llenando fecha: ${e.message}`);
@@ -1814,9 +2173,22 @@ const CONFIG = {
         // ============================================
         console.log('📋 PASO 5: Verificando resultados de la consulta...');
         
-        // 5.1 Esperar resultados
+        // 5.1 Esperar resultados (MEJORADO)
         console.log('⏳ Esperando resultados de la consulta...');
-        await page.waitForTimeout(CONFIG.TIMEOUTS.PAGE_LOAD);
+        
+        // Esperar más tiempo para que se procese la consulta
+        await page.waitForTimeout(5000); // Esperar inicial
+        
+        // Esperar a que se cargue cualquier contenido dinámico
+        try {
+            await iframeContent.waitForLoadState('networkidle', { timeout: 15000 });
+            console.log('✅ Página en estado networkidle');
+        } catch (e) {
+            console.log('⚠️ Timeout en networkidle, continuando...');
+        }
+        
+        // Esperar adicional para asegurar carga completa
+        await page.waitForTimeout(3000);
         
         // 5.2 Verificar que se cargaron los resultados - MEJORADO
         console.log('🔍 Verificando carga de resultados...');
@@ -1883,16 +2255,55 @@ const CONFIG = {
             // Esperar a que la tabla esté completamente cargada
             await page.waitForTimeout(3000);
             
-            // Buscar la tabla de resultados
-            const tablaFacturas = iframeContent.locator('#recibido.facturasGrid');
-            await tablaFacturas.waitFor({ state: 'visible', timeout: 10000 });
+            // Buscar la tabla de resultados usando múltiples selectores
+            let tablaFacturas = null;
+            let filasFacturas = null;
+            let cantidadFilas = 0;
             
-            if (await tablaFacturas.isVisible()) {
-                Logger.success('Tabla de facturas encontrada');
+            // Intentar diferentes selectores para encontrar la tabla
+            const selectoresTabla = [
+                '#recibido\\.facturasGrid',
+                'div[id="recibido.facturasGrid"]',
+                'div[dojotype="dojox.grid.DataGrid"]',
+                'div[class*="dojoxGrid"]',
+                'div[role="grid"]',
+                'div[id*="facturasGrid"]'
+            ];
+            
+            for (const selector of selectoresTabla) {
+                try {
+                    tablaFacturas = iframeContent.locator(selector);
+                    await tablaFacturas.waitFor({ state: 'visible', timeout: 5000 });
+                    Logger.success(`Tabla de facturas encontrada con selector: ${selector}`);
+                    break;
+                } catch (e) {
+                    Logger.debug(`Selector ${selector} no funcionó: ${e.message}`);
+                    continue;
+                }
+            }
+            
+            if (tablaFacturas && await tablaFacturas.isVisible()) {
+                // Buscar filas usando múltiples selectores
+                const selectoresFilas = [
+                    'div[class*="dojoxGridRow"]',
+                    'tr[role="row"]',
+                    'div[role="row"]',
+                    'table tr',
+                    'tbody tr'
+                ];
                 
-                // Extraer filas de datos (saltando el encabezado)
-                const filasFacturas = iframeContent.locator('#recibido.facturasGrid tbody tr');
-                const cantidadFilas = await filasFacturas.count();
+                for (const selectorFila of selectoresFilas) {
+                    try {
+                        filasFacturas = tablaFacturas.locator(selectorFila);
+                        cantidadFilas = await filasFacturas.count();
+                        if (cantidadFilas > 0) {
+                            Logger.success(`Filas encontradas con selector: ${selectorFila} (${cantidadFilas} filas)`);
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
                 
                 Logger.info(`Procesando ${cantidadFilas} filas de facturas...`);
                 
@@ -1953,7 +2364,7 @@ const CONFIG = {
                 await guardarDatos(datosProcesados, resumen);
                 
                 // Descargar archivos XML y PDF (usando lógica mejorada del bot Python)
-                const resultadoDescargas = await descargarArchivos(iframeContent, facturasExtraidas);
+                const resultadoDescargas = await descargarArchivos(page, iframeContent, facturasExtraidas);
                 
                 // Mostrar resumen de descargas
                 if (resultadoDescargas) {
@@ -1962,7 +2373,9 @@ const CONFIG = {
                     Logger.info(`✅ Descargas exitosas: ${resultadoDescargas.descargas_exitosas}`);
                     Logger.info(`📄 Archivos XML: ${resultadoDescargas.descargas_xml}`);
                     Logger.info(`📋 Archivos PDF: ${resultadoDescargas.descargas_pdf}`);
-                    Logger.info(`❌ Errores: ${resultadoDescargas.errores}`);
+                    Logger.info(`❌ Errores XML: ${resultadoDescargas.errores_xml}`);
+                    Logger.info(`❌ Errores PDF: ${resultadoDescargas.errores_pdf}`);
+                    Logger.info(`📤 Archivos subidos a cloud: ${resultadoDescargas.archivos_subidos}`);
                 }
                 
             } else {
@@ -1986,7 +2399,7 @@ const CONFIG = {
                 const pythonParams = {
                     headless: false, // Usar sesión existente
                     fecha_inicio: '01/01/2024',
-                    fecha_fin: '31/12/2024',
+                    fecha_fin: '31/01/2024',
                     formatos: ['json', 'excel'],
                     descargar_archivos: true
                 };
@@ -2031,7 +2444,7 @@ const CONFIG = {
         Logger.info('   Login exitoso con Playwright');
         Logger.info('   Navegación: Empresas → Comprobantes → SEE-SOL → Factura → Consultar');
         Logger.info('   Aplicación "Consultar Factura y Nota" cargada');
-        Logger.info('   Consulta configurada y ejecutada: FE Recibidas (01/01/2024 - 31/12/2024)');
+        Logger.info('   Consulta configurada y ejecutada: FE Recibidas (01/01/2024 - 31/01/2024)');
         Logger.info('   Resultados verificados con Playwright');
         
         if (pythonReady) {
