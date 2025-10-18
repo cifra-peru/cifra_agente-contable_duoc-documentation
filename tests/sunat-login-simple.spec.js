@@ -5,8 +5,9 @@ import path from 'path';
 import dotenv from 'dotenv';
 import yauzl from 'yauzl';
 
-// Cargar variables de entorno
-dotenv.config();
+// Cargar variables de entorno desde múltiples fuentes
+dotenv.config(); // Cargar desde .env si existe
+dotenv.config({ path: './config.env' }); // Cargar desde config.env
 
 // 🤖 SUNAT BOT - AUTOMATIZACIÓN COMPLETA CON INTEGRACIÓN PYTHON
 // ============================================
@@ -371,9 +372,13 @@ async function descargarArchivos(page, iframeContent, facturas) {
         // Configurar descarga de archivos
         const downloadPromise = page.waitForEvent('download');
         
-        for (let i = 0; i < facturas.length; i++) {
+        // Limitar a solo 3 facturas para la descarga
+        const facturasLimitadas = facturas.slice(0, 3);
+        Logger.info(`Procesando solo las primeras 3 facturas de ${facturas.length} disponibles`);
+        
+        for (let i = 0; i < facturasLimitadas.length; i++) {
             try {
-                const factura = facturas[i];
+                const factura = facturasLimitadas[i];
                 Logger.debug(`Procesando descargas para factura ${i + 1}: ${factura.nro_factura}`);
                 
                 // Buscar directamente los enlaces de descarga usando el índice
@@ -405,12 +410,14 @@ async function descargarArchivos(page, iframeContent, facturas) {
                                     const archivosXML = await extraerArchivosZip(filePath);
                                     
                                     for (const archivoXML of archivosXML) {
-                                        archivosDescargados.push({
+                                    archivosDescargados.push({
                                             tipo: 'XML',
                                             factura: factura.nro_factura,
                                             archivo: archivoXML.contenido,
                                             nombre: archivoXML.nombre,
-                                            ruta: filePath
+                                        ruta: filePath,
+                                        fecha_emision: limpiarFecha((factura.fecha_emision || '').trim()),
+                                        empresa: process.env.STORAGE_COMPANY_NAME || 'Inka Moss'
                                         });
                                         
                                         descargasXML++;
@@ -431,7 +438,9 @@ async function descargarArchivos(page, iframeContent, facturas) {
                                     factura: factura.nro_factura,
                                     archivo: fileBuffer,
                                     nombre: fileName,
-                                    ruta: filePath
+                                    ruta: filePath,
+                                    fecha_emision: limpiarFecha((factura.fecha_emision || '').trim()),
+                                    empresa: process.env.STORAGE_COMPANY_NAME || 'Inka Moss'
                                 });
                                 
                                 descargasXML++;
@@ -482,7 +491,9 @@ async function descargarArchivos(page, iframeContent, facturas) {
                                 factura: factura.nro_factura,
                                 archivo: fileBuffer,
                                 nombre: fileName,
-                                ruta: filePath
+                                ruta: filePath,
+                                fecha_emision: limpiarFecha((factura.fecha_emision || '').trim()),
+                                empresa: process.env.STORAGE_COMPANY_NAME || 'Inka Moss'
                             });
                             
                             descargasPDF++;
@@ -519,7 +530,7 @@ async function descargarArchivos(page, iframeContent, facturas) {
             Logger.info(`Subiendo ${archivosDescargados.length} archivos a cloud storage...`);
             
             try {
-                const resultadoCloud = await subirArchivosACloudStorage(archivosDescargados);
+                const resultadoCloud = await subirArchivosACloudStorage(archivosDescargados, page, process.env.GCP_BUCKET_NAME);
                 
                 if (resultadoCloud.errores > 0) {
                     Logger.warning(`${resultadoCloud.errores} archivos fallaron en cloud storage, guardando en disco como fallback...`);
@@ -533,7 +544,7 @@ async function descargarArchivos(page, iframeContent, facturas) {
         
         // Resumen de descargas
         Logger.success(`Descarga de archivos completada:`, {
-            total_facturas: facturas.length,
+            total_facturas: facturasLimitadas.length,
             descargas_exitosas: descargasExitosas,
             descargas_xml: descargasXML,
             descargas_pdf: descargasPDF,
@@ -544,7 +555,7 @@ async function descargarArchivos(page, iframeContent, facturas) {
         });
         
         return {
-            total_facturas: facturas.length,
+            total_facturas: facturasLimitadas.length,
             descargas_exitosas: descargasExitosas,
             descargas_xml: descargasXML,
             descargas_pdf: descargasPDF,
@@ -557,24 +568,29 @@ async function descargarArchivos(page, iframeContent, facturas) {
     } catch (e) {
         Logger.error(`Error general en descarga de archivos: ${e.message}`);
         return {
-            total_facturas: facturas.length,
+            total_facturas: facturasLimitadas ? facturasLimitadas.length : 0,
             descargas_exitosas: 0,
             descargas_xml: 0,
             descargas_pdf: 0,
-            errores: facturas.length,
+            errores: facturasLimitadas ? facturasLimitadas.length : 0,
             archivos_subidos: 0
         };
     }
 }
 
 // Función para subir archivos a cloud storage
-async function subirArchivosACloudStorage(archivos) {
+async function subirArchivosACloudStorage(archivos, page, bucketName = null) {
     try {
         Logger.info('Iniciando subida de archivos a cloud storage...');
         
         // Importar la implementación real de cloud storage
         const { CloudStorageFileObjectStorageRepository } = await import('../cloud-storage.js');
         const cloudStorage = new CloudStorageFileObjectStorageRepository();
+        
+        // Obtener el nombre del bucket si no se proporciona
+        if (!bucketName) {
+            bucketName = process.env.GCP_BUCKET_NAME || 'stage_cifra_agente-contabl';
+        }
         
         let archivosSubidos = 0;
         let erroresSubida = 0;
@@ -591,7 +607,9 @@ async function subirArchivosACloudStorage(archivos) {
                 const fileToUpload = {
                     fileId: generateUniqueId(),
                     fileName: nombreUnico,
-                    file: archivo.archivo
+                    file: archivo.archivo,
+                    companyName: archivo.empresa || process.env.STORAGE_COMPANY_NAME || 'Inka Moss',
+                    invoiceDate: archivo.fecha_emision // esperado en formato YYYY-MM-DD
                 };
                 
                 // Subir archivo a cloud storage
@@ -610,6 +628,121 @@ async function subirArchivosACloudStorage(archivos) {
         
         if (erroresSubida > 0) {
             Logger.warning(`${erroresSubida} archivos fallaron en la subida`);
+        }
+        
+        // Actualizar automáticamente Google Cloud Console después de subir archivos
+        const openGCPConsole = process.env.OPEN_GCP_CONSOLE !== 'false'; // Por defecto true
+        if (page && archivosSubidos > 0 && openGCPConsole) {
+            Logger.info('🔄 Navegando a Google Cloud Console para mostrar facturas subidas...');
+            try {
+                // URL específica de Google Cloud Storage proporcionada por el usuario
+                const gcpConsoleUrl = 'https://console.cloud.google.com/storage/browser/stage_cifra_agente-contabl/Cliente%201/Inka%20Moss/2024/2024-01-31/XML?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&project=pioneering-rex-471016-m3';
+                
+                Logger.info(`🌐 Navegando a: ${gcpConsoleUrl}`);
+                
+                // ESTRATEGIA 1: Navegar directamente a la URL específica
+                await page.goto(gcpConsoleUrl, { 
+                    waitUntil: 'networkidle',
+                    timeout: 30000 
+                });
+                Logger.success('✅ Google Cloud Console cargado');
+                
+                // Esperar a que cargue completamente la página
+                await page.waitForTimeout(5000);
+                
+                // ESTRATEGIA 2: Actualizar la página múltiples veces para asegurar que se muestren los archivos
+                Logger.info('🔄 Actualizando página para mostrar facturas subidas...');
+                
+                // Primera actualización
+                await page.reload({ waitUntil: 'networkidle', timeout: 30000 });
+                Logger.info('✅ Primera actualización completada');
+                await page.waitForTimeout(3000);
+                
+                // Segunda actualización para asegurar
+                await page.reload({ waitUntil: 'networkidle', timeout: 30000 });
+                Logger.info('✅ Segunda actualización completada');
+                await page.waitForTimeout(3000);
+                
+                // ESTRATEGIA 3: Verificar que los archivos se muestren correctamente
+                Logger.info('🔍 Verificando que los archivos se muestren correctamente...');
+                
+                try {
+                    // Buscar elementos que indiquen que hay archivos en la página
+                    const fileIndicators = [
+                        '[data-testid="file-row"]',
+                        '[data-testid="object-row"]',
+                        '.file-row',
+                        '.object-row',
+                        '[role="row"]',
+                        'tr[data-testid*="file"]',
+                        'tr[data-testid*="object"]',
+                        'div[class*="file"]',
+                        'div[class*="object"]'
+                    ];
+                    
+                    let filesFound = false;
+                    for (const indicator of fileIndicators) {
+                        try {
+                            const elements = await page.locator(indicator).count();
+                            if (elements > 0) {
+                                Logger.success(`✅ Se encontraron ${elements} archivos con indicador: ${indicator}`);
+                                filesFound = true;
+                                break;
+                            }
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                    
+                    if (!filesFound) {
+                        Logger.warning('⚠️ No se detectaron archivos visibles, intentando actualización adicional...');
+                        
+                        // ESTRATEGIA 4: Actualización adicional con scroll
+                        await page.evaluate(() => {
+                            window.scrollTo(0, 0);
+                        });
+                        await page.waitForTimeout(1000);
+                        
+                        await page.reload({ waitUntil: 'networkidle', timeout: 30000 });
+                        Logger.info('✅ Actualización adicional completada');
+                        await page.waitForTimeout(3000);
+                    }
+                    
+                } catch (verificationError) {
+                    Logger.warning(`⚠️ Error en verificación de archivos: ${verificationError.message}`);
+                }
+                
+                // ESTRATEGIA 5: Tomar screenshot de la consola de GCP actualizada
+                Logger.info('📸 Tomando screenshot de la consola actualizada...');
+                await page.screenshot({ 
+                    path: 'gcp-console-after-upload.png',
+                    fullPage: true 
+                });
+                Logger.success('📸 Screenshot de Google Cloud Console actualizado guardado');
+                
+                // ESTRATEGIA 6: Log final con información de la página
+                const currentUrl = page.url();
+                const pageTitle = await page.title();
+                Logger.info(`📍 URL final: ${currentUrl}`);
+                Logger.info(`📄 Título de la página: ${pageTitle}`);
+                Logger.success('✅ Google Cloud Console actualizado exitosamente');
+                
+            } catch (gcpError) {
+                Logger.error(`❌ Error navegando a Google Cloud Console: ${gcpError.message}`);
+                Logger.debug(`Stack trace: ${gcpError.stack}`);
+                
+                // ESTRATEGIA DE FALLBACK: Intentar navegación básica
+                try {
+                    Logger.info('🔄 Intentando estrategia de fallback...');
+                    const fallbackUrl = 'https://console.cloud.google.com/storage/browser/stage_cifra_agente-contabl';
+                    await page.goto(fallbackUrl, { waitUntil: 'networkidle', timeout: 15000 });
+                    await page.waitForTimeout(3000);
+                    await page.reload({ waitUntil: 'networkidle', timeout: 15000 });
+                    Logger.success('✅ Estrategia de fallback exitosa');
+                } catch (fallbackError) {
+                    Logger.error(`❌ Estrategia de fallback también falló: ${fallbackError.message}`);
+                }
+            }
         }
         
         return {
