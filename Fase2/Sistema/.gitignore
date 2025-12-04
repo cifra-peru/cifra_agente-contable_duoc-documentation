@@ -1,0 +1,12 @@
+node_modules/
+*.log
+Error.log
+ESTADO-SINCRONIZACION.txt
+screenshots/
+tests/
+*.bat
+*.ps1
+*.vbs
+.DS_Store
+Thumbs.db
+
